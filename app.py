@@ -3,7 +3,7 @@ import os
 import dotenv
 import random, string
 from pymongo import MongoClient
-from passlib.hash import pbkdf2_sha256
+from hashlib import sha256
 
 #load env
 dotenv.load_dotenv()
@@ -49,7 +49,7 @@ def index():
     if session.get("logged_in"):
         usernick = request.cookies.get("user")
         username = logged_user_list[str(usernick)]
-        return render_template("logged.html", user=username)
+        return render_template("logged.html", user=username, message=msg)
     #not logged
     else:
         if request.cookies.get("user") == None:
@@ -63,7 +63,10 @@ def index():
 #login index
 @app.route("/login")
 def login():
-    return render_template("login.html")
+    if session.get("logged_in"):
+        return redirect("/")
+    else:
+        return render_template("login.html")
 
 #login
 @app.route("/log", methods=["GET","POST"])
@@ -79,6 +82,7 @@ def log():
         if i in password:
              return redirect(url_for("index", message="Password is invalid"))
     #get user data from db
+    password = sha256(password.encode()).hexdigest()
     find = db_users.find_one({"name": username, "password": password})
     print(find)
     #login successfully
@@ -149,6 +153,7 @@ def reg():
         if find:
             return redirect(url_for("/", message="Username already exist"))
         #add user to db
+        password = sha256(password.encode()).hexdigest()
         user_data = {"name": username, "password": password}
         x = db_users.insert_one(user_data)
         print(x.inserted_id)
@@ -168,11 +173,21 @@ def reg():
 
 @app.route("/terminal")
 def terminal():
-    return
-
-@app.route("/test")
-def test():
-    return render_template("wtf.html")
+    if session.get("logged_in"):
+        user = request.cookies.get("user")
+        if user:
+            username = logged_user_list[user]
+            username = sha256(username.encode()).hexdigest()
+            db_admin = db["admin"]
+            find = db_admin.find_one({"name":username})
+            if find:
+                return render_template("terminal.html")
+            else:
+                return redirect(url_for("index", message="Oh?"))
+        else:
+            return redirect(url_for("index", message="Oh?"))
+    else:
+        return redirect(url_for("index", message="Oh?"))
 
 #404
 @app.errorhandler(404)
