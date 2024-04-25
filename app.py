@@ -88,7 +88,7 @@ def log():
     #login successfully
     if find:
         session["logged_in"] = True
-        resp = make_response(render_template("owo.html"))
+        resp = make_response(render_template("login_successful.html", username=username))
         #generate cookie
         usernick = "decoy"
         while usernick in logged_user_list:
@@ -171,6 +171,7 @@ def reg():
         resp.set_cookie("user", usernick)
         return resp
 
+#terminal, but no terminal
 @app.route("/terminal")
 def terminal():
     if session.get("logged_in"):
