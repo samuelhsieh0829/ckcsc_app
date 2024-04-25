@@ -48,8 +48,20 @@ def index():
     #logged in
     if session.get("logged_in"):
         usernick = request.cookies.get("user")
-        username = logged_user_list[str(usernick)]
-        return render_template("logged.html", user=username, message=msg)
+        if session.get("user") == usernick:
+            try:
+                username = logged_user_list[str(usernick)]
+                return render_template("logged.html", user=username, message=msg)
+            except KeyError:
+                session["logged_in"] = False
+                resp = make_response(render_template("index.html", message="Deleted sussy cookie"))
+                resp.delete_cookie("user")
+                return resp
+        else:
+            session["logged_in"] = False
+            resp = make_response(render_template("index.html", message="Deleted sussy cookie"))
+            resp.delete_cookie("user")
+            return resp
     #not logged
     else:
         if request.cookies.get("user") == None:
@@ -98,6 +110,7 @@ def log():
             usernick = "".join(usernick[:10])
         logged_user_list[usernick] = username
         resp.set_cookie("user", usernick)
+        session["user"] = usernick
         return resp
     #login failed
     else:
@@ -114,6 +127,7 @@ def logout():
         resp = make_response(redirect("/"))
         resp.delete_cookie("user")
         session.pop("logged_in", None)
+        session.pop("user", None)
         return resp
 
 #clear cookie
@@ -122,6 +136,12 @@ def clear_cookie():
     resp = make_response(redirect("/"))
     resp.delete_cookie("user")
     return resp
+
+@app.route("/clear_session")
+def clear_session():
+    session.pop("logged_in", None)
+    session.pop("user", None)
+    return redirect("/")
 
 #register index
 @app.route("/register")
@@ -169,6 +189,7 @@ def reg():
             usernick = "".join(usernick[:10])
         logged_user_list[usernick] = username
         resp.set_cookie("user", usernick)
+        session["user"] = usernick
         return resp
 
 #terminal, but no terminal
@@ -177,14 +198,18 @@ def terminal():
     if session.get("logged_in"):
         user = request.cookies.get("user")
         if user:
+            username_session = session.get("user")
             username = logged_user_list[user]
-            username = sha256(username.encode()).hexdigest()
-            db_admin = db["admin"]
-            find = db_admin.find_one({"name":username})
-            if find:
-                return render_template("terminal.html")
+            if username == username_session:
+                username = sha256(username.encode()).hexdigest()
+                db_admin = db["admin"]
+                find = db_admin.find_one({"name":username})
+                if find:
+                    return render_template("terminal.html")
+                else:
+                    return redirect(url_for("index", message="Oh?"))
             else:
-                return redirect(url_for("index", message="Oh?"))
+                redirect(url_for("index", message="Oh?"))
         else:
             return redirect(url_for("index", message="Oh?"))
     else:
