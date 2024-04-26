@@ -6,3 +6,7 @@ body{
 input{
     background-color: #aaaaaa;
 }
+.terminal{
+    color: #f00;
+    font-size: large;
+}

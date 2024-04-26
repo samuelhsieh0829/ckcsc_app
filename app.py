@@ -199,8 +199,8 @@ def terminal():
         user = request.cookies.get("user")
         if user:
             username_session = session.get("user")
-            username = logged_user_list[user]
-            if username == username_session:
+            if user == username_session:
+                username = logged_user_list[user]
                 username = sha256(username.encode()).hexdigest()
                 db_admin = db["admin"]
                 find = db_admin.find_one({"name":username})
@@ -209,11 +209,12 @@ def terminal():
                 else:
                     return redirect(url_for("index", message="Oh?"))
             else:
-                redirect(url_for("index", message="Oh?"))
+                print(username, username_session)
+                return redirect(url_for("index", message="Why?"))
         else:
-            return redirect(url_for("index", message="Oh?"))
+            return redirect(url_for("index", message="Where tf is your cookie?"))
     else:
-        return redirect(url_for("index", message="Oh?"))
+        return redirect(url_for("index", message="Login first"))
 
 #404
 @app.errorhandler(404)
