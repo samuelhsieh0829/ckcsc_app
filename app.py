@@ -221,4 +221,5 @@ def terminal():
 def error404(error):
     return redirect(url_for("index", message="404"))
 
-app.run()
+if __name__ == "__main__":
+    app.run()
