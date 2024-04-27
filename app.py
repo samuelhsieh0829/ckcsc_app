@@ -171,7 +171,7 @@ def reg():
         #check if user is in db
         find = db_users.find_one({"name":username})
         if find:
-            return redirect(url_for("/", message="Username already exist"))
+            return redirect(url_for("index", message="Username already exist"))
         #add user to db
         password = sha256(password.encode()).hexdigest()
         user_data = {"name": username, "password": password}
